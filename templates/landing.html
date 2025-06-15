@@ -1,0 +1,962 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Welcome to EcoTourism - Discover Breathtaking Natural Wonders{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css"/>
+<style>
+    .profile-img {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+    }
+
+    /* Hero Section */
+    .landing-hero {
+        position: relative;
+        height: 100vh; /* ubah dari 90vh ke 100vh */
+        background-image: url('{% static "img/scr.png" %}');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+    }
+
+    
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.3);
+    }
+    
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        padding-top: 32vh;
+    }
+    
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 800;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        letter-spacing: 1px;
+    }
+    
+    .hero-subtitle {
+        font-size: 1.5rem;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+        margin-bottom: 2rem;
+    }
+    
+    /* Cards Styling */
+    .destination-card, .tour-card {
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        margin-bottom: 1.5rem;
+    }
+    
+    .destination-card:hover, .tour-card:hover {
+        transform: translateY(-15px);
+        box-shadow: 0 20px 30px rgba(0, 0, 0, 0.15);
+    }
+    
+    .card-img-top {
+        height: 220px;
+        object-fit: cover;
+        transition: transform 0.8s ease;
+    }
+    
+    .destination-card:hover .card-img-top, 
+    .tour-card:hover .card-img-top {
+        transform: scale(1.1);
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .card-title {
+        font-weight: 700;
+        font-size: 1.3rem;
+        margin-bottom: 0.8rem;
+        color: #2d3748;
+    }
+    
+    .card-subtitle {
+        color: #4a5568;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+    }
+    .map-wrapper .map-image-container {
+        overflow: hidden;
+        border-radius: 12px;
+    }
+
+    .map-image {
+        transition: transform 0.4s ease, box-shadow 0.4s ease;
+        width: 100%;
+        height: auto;
+    }
+
+    .map-image:hover {
+        transform: scale(1.05);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-subtitle i {
+        margin-right: 0.3rem;
+    }
+    
+    .image-container {
+        overflow: hidden;
+    }
+    
+    /* Sections Styling */
+    section {
+        padding: 5rem 0;
+    }
+    
+    .section-title {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 2.5rem;
+    }
+    
+    .section-title:after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        left: 0;
+        right: 0;
+        height: 4px;
+        width: 60px;
+        margin: 0 auto;
+        background: linear-gradient(to right, #38a169, #2c7a7b);
+        border-radius: 2px;
+    }
+    .gallery-item {
+        height: 100%;
+    }
+
+    .image-container {
+        position: relative;
+        width: 100%;
+        height: 300px; /* Ukuran tetap untuk keseragaman */
+        overflow: hidden;
+        border-radius: 10px;
+    }
+
+    .image-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+
+    .image-container:hover img {
+        transform: scale(1.1);
+    }
+
+    .gallery-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 100%;
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
+        opacity: 0;
+        transition: opacity 0.5s ease;
+    }
+
+    .image-container:hover .gallery-overlay {
+        opacity: 1;
+    }
+
+    .gallery-info {
+        z-index: 2;
+    }
+
+    .gallery-info h5,
+    .gallery-info p {
+        margin: 0;
+    }
+
+    /* Why Choose Us Section */
+    .feature-box {
+        padding: 2rem;
+        border-radius: 15px;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        background: #fff;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .feature-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .feature-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: #38a169;
+    }
+    
+    /* Testimonial Section */
+    .testimonial-card {
+        position: relative;
+        padding: 2rem;
+        border-radius: 15px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    }
+    
+    .testimonial-card:before {
+        content: '\201C';
+        position: absolute;
+        top: 10px;
+        left: 20px;
+        font-size: 5rem;
+        color: rgba(56, 161, 105, 0.2);
+        font-family: serif;
+    }
+    
+    .testimonial {
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* CTA Section */
+    .cta-section {
+        position: relative;
+        background: linear-gradient(to right, #38a169, #2c7a7b);
+        color: white;
+        padding: 5rem 0;
+        overflow: hidden;
+    }
+    
+    .cta-section:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('{% static "img/pattern.jpg" %}');
+        opacity: 0.1;
+    }
+    
+    .cta-content {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .btn-cta {
+        padding: 0.8rem 2rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+        border-radius: 50px;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-cta:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Scroll Animation */
+    .scroll-indicator {
+        position: absolute;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 5;
+    }
+    
+    .mouse {
+        width: 30px;
+        height: 50px;
+        border: 2px solid #fff;
+        border-radius: 20px;
+        position: relative;
+    }
+    
+    .mouse:after {
+        content: '';
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 4px;
+        height: 10px;
+        background: #fff;
+        border-radius: 2px;
+        animation: scrollAnim 2s infinite;
+    }
+    
+ 
+    
+    /* Price Tag */
+    .price-tag {
+        background: #38a169;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 30px;
+        font-weight: 700;
+        display: inline-block;
+    }
+    
+    /* Floating Elements */
+    .floating {
+        animation: floating 3s ease-in-out infinite;
+    }
+    
+    @keyframes floating {
+        0% { transform: translateY(0px); }
+        50% { transform: translateY(-15px); }
+        100% { transform: translateY(0px); }
+    }
+    
+    /* Background Patterns */
+    .bg-pattern {
+        background-color: #f8f9fa;
+        background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    }
+    
+    /* Video Background */
+    .video-bg {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
+        transform: translateX(-50%) translateY(-50%);
+        z-index: 0;
+    }
+    
+    /* Weather Widget */
+    .weather-widget {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.2);
+        backdrop-filter: blur(5px);
+        padding: 10px 15px;
+        border-radius: 50px;
+        color: white;
+        font-weight: 500;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Buttons */
+    .btn-custom {
+        border-radius: 50px;
+        padding: 0.8rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        z-index: 1;
+    }
+    
+    .btn-custom::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.2);
+        z-index: -2;
+    }
+    
+    .btn-custom::before {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.1);
+        transition: all 0.3s;
+        z-index: -1;
+    }
+    
+    .btn-custom:hover::before {
+        width: 100%;
+    }
+    
+
+    
+    /* Reveal Animation */
+    .reveal {
+        position: relative;
+        opacity: 0;
+        transition: all 0.8s ease;
+    }
+    
+    .reveal.active {
+        opacity: 1;
+    }
+    
+    .reveal.active.fade-bottom {
+        animation: fade-bottom 0.8s ease-in-out both;
+    }
+    
+    .reveal.active.fade-left {
+        animation: fade-left 0.8s ease-in-out both;
+    }
+    
+    .reveal.active.fade-right {
+        animation: fade-right 0.8s ease-in-out both;
+    }
+    
+    .navbar-expand-lg{
+            background-color: rgba(56, 255, 255, 0) !important;
+        }
+    .kepala{
+        margin-bottom: 0px !important;
+    }
+    .custom-slower {
+        --animate-duration: 5s;
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section with Enhanced Animation -->
+<div class="landing-hero">
+    <div class="overlay"></div>
+    <div class="hero-content">
+        <h1 class="hero-title text-white animate__animated animate__fadeInUp animate__slower animate__delay-1s">
+            Discover Nature's Hidden Gems
+        </h1>
+        <p class="hero-subtitle text-white animate__animated animate__fadeInUp animate__slower animate__delay-2s">
+            Experience breathtaking destinations with eco-friendly tours
+        </p>
+        <div class="animate__animated animate__fadeInUp animate__slower animate__delay-3s mt-4">
+            <a href="{% url 'destination_list' %}" class="btn btn-success btn-lg btn-custom me-3">
+                <i class="fas fa-map-marker-alt me-2"></i>Explore Destinations
+            </a>
+            <a href="{% url 'tour_list' %}" class="btn btn-outline-light btn-lg btn-custom">
+                <i class="fas fa-route me-2"></i>View Tours
+            </a>
+        </div>
+    </div>
+
+    <!-- Scroll Indicator -->
+    <div class="scroll-indicator animate__animated animate__fadeInUp animate__slower animate__delay-4s">
+        <div class="mouse"></div>
+    </div>
+</div>
+
+
+<!-- Why Choose Us Section -->
+<section class="py-5 bg-pattern">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div data-aos="fade-right">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-4">Why Choose Us?</h2>
+                    
+                    <div class="feature-box" data-aos="fade-up" data-aos-delay="100">
+                        <div class="d-flex">
+                            <div class="feature-icon me-4">
+                                <i class="fas fa-leaf"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-xl mb-2">Sustainable Tourism</h4>
+                                <p>We are committed to environmental conservation and supporting local communities through responsible travel practices.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-box" data-aos="fade-up" data-aos-delay="200">
+                        <div class="d-flex">
+                            <div class="feature-icon me-4">
+                                <i class="fas fa-user-friends"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-xl mb-2">Expert Local Guides</h4>
+                                <p>Our knowledgeable guides offer authentic insights into each destination's culture, history, and natural environment.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-box" data-aos="fade-up" data-aos-delay="300">
+                        <div class="d-flex">
+                            <div class="feature-icon me-4">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-xl mb-2">Small Group Experiences</h4>
+                                <p>Travel in intimate groups for a more personalized adventure and minimal environmental impact.</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="feature-box" data-aos="fade-up" data-aos-delay="400">
+                        <div class="d-flex">
+                            <div class="feature-icon me-4">
+                                <i class="fas fa-map-marked-alt"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold text-xl mb-2">Carefully Curated Destinations</h4>
+                                <p>Discover hidden gems off the beaten path, selected for their natural beauty and cultural significance.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="testimonial-card h-100" data-aos="fade-left">
+                    <div class="card-body">
+                        <h3 class="card-title mb-4">What Our Travelers Say</h3>
+                        
+                        <div class="testimonial mb-4">
+                            <div class="mb-3">
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                            </div>
+                            <p class="mb-3 fst-italic">"An incredible experience that changed my perspective on travel. The guides were exceptional and the natural beauty was breathtaking. I'll never forget watching the sunrise over the forest canopy."</p>
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <img src="{% static "img/sarah.jpg" %}" class="rounded-circle" alt="Sarah M." width="40" height="40">
+                                </div>
+                                <div>
+                                    <strong>Sarah M.</strong><br>
+                                    <small class="text-muted">Zhangjiajie Forest Tour</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="testimonial">
+                            <div class="mb-3">
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star-half-alt text-warning"></i>
+                            </div>
+                            <p class="mb-3 fst-italic">"The attention to sustainability and environmental responsibility really set this tour apart. We had amazing adventures while knowing we were minimizing our impact."</p>
+                            <div class="d-flex align-items-center">
+                                <div class="me-3">
+                                    <img src="{% static "img/james.jpg" %}" class="rounded-circle" alt="James K." width="40" height="40">
+                                </div>
+                                <div>
+                                    <strong>James K.</strong><br>
+                                    <small class="text-muted">Amazon Rainforest Expedition</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center cta-content" data-aos="zoom-in">
+                <div class="floating">
+                    <i class="fas fa-globe-americas fa-4x mb-4"></i>
+                </div>
+                <h2 class="text-3xl font-bold mb-4">Ready to Experience Nature's Wonders?</h2>
+                <p class="text-xl mb-5">Join us for an unforgettable adventure that respects and celebrates our natural world.</p>
+                <div class="d-flex justify-content-center flex-wrap gap-3">
+                    <a href="{% url 'destination_list' %}" class="btn btn-light btn-lg btn-cta me-3">
+                        <i class="fas fa-compass me-2"></i>Start Your Journey
+                    </a>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+<!-- Immersive Gallery Section -->
+<section class="gallery-section py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h2 class="section-title">Breathtaking Destinations</h2>
+            <p class="lead text-muted">Immerse yourself in the beauty of our eco-friendly destinations</p>
+        </div>
+        
+        <div class="gallery-wrapper">
+    <div class="row g-3">
+        <!-- Foto 1 -->
+        <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="100">
+            <div class="gallery-item">
+                <div class="image-container">
+                    <img src="{% static 'img/a.jpg' %}" alt="Lush Rainforest" class="img-fluid gallery-img">
+                    <div class="gallery-overlay d-flex flex-column justify-content-end">
+                        <div class="gallery-info p-3">
+                            <h5 class="text-white mb-0">Amazon Rainforest</h5>
+                            <p class="text-white-50 mb-0"><i class="fas fa-map-marker-alt me-1"></i>Brazil</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Foto 2 -->
+        <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="200">
+            <div class="gallery-item">
+                <div class="image-container">
+                    <img src="{% static 'img/b.jpg' %}" alt="Mountain View" class="img-fluid gallery-img">
+                    <div class="gallery-overlay d-flex flex-column justify-content-end">
+                        <div class="gallery-info p-3">
+                            <h5 class="text-white mb-0">Zhangjiajie Mountains</h5>
+                            <p class="text-white-50 mb-0"><i class="fas fa-map-marker-alt me-1"></i>China</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Foto 3 -->
+        <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="300">
+            <div class="gallery-item">
+                <div class="image-container">
+                    <img src="{% static 'img/c.jpg' %}" alt="Coastal View" class="img-fluid gallery-img">
+                    <div class="gallery-overlay d-flex flex-column justify-content-end">
+                        <div class="gallery-info p-3">
+                            <h5 class="text-white mb-0">Galapagos Islands</h5>
+                            <p class="text-white-50 mb-0"><i class="fas fa-map-marker-alt me-1"></i>Ecuador</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Foto 4 -->
+        <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="400">
+            <div class="gallery-item">
+                <div class="image-container">
+                    <img src="{% static 'img/d.jpg' %}" alt="Waterfall" class="img-fluid gallery-img">
+                    <div class="gallery-overlay d-flex flex-column justify-content-end">
+                        <div class="gallery-info p-3">
+                            <h5 class="text-white mb-0">Costa Rica Waterfalls</h5>
+                            <p class="text-white-50 mb-0"><i class="fas fa-map-marker-alt me-1"></i>Costa Rica</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Foto 5 -->
+        <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="500">
+            <div class="gallery-item">
+                <div class="image-container">
+                    <img src="{% static 'img/e.jpg' %}" alt="Wildlife" class="img-fluid gallery-img">
+                    <div class="gallery-overlay d-flex flex-column justify-content-end">
+                        <div class="gallery-info p-3">
+                            <h5 class="text-white mb-0">Ocean wildlife</h5>
+                            <p class="text-white-50 mb-0"><i class="fas fa-map-marker-alt me-1"></i>Tanzania</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Foto 6 -->
+        <div class="col-md-6 col-lg-4" data-aos="fade-up" data-aos-delay="600">
+            <div class="gallery-item">
+                <div class="image-container">
+                    <img src="{% static 'img/f.jpg' %}" alt="Mountain Lake" class="img-fluid gallery-img">
+                    <div class="gallery-overlay d-flex flex-column justify-content-end">
+                        <div class="gallery-info p-3">
+                            <h5 class="text-white mb-0">New Zealand Alps</h5>
+                            <p class="text-white-50 mb-0"><i class="fas fa-map-marker-alt me-1"></i>New Zealand</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        
+        <div class="text-center mt-4" data-aos="fade-up">
+            <a href="{% url 'destination_list' %}" class="btn btn-outline-success btn-lg">
+                <i class="fas fa-images me-2"></i>Book Your Adventure
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Interactive Map Section -->
+<section class="map-section py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <div data-aos="fade-right">
+                    <h2 class="section-title">Explore Our Destinations</h2>
+                    <p class="lead mb-4">Discover the world's most pristine ecosystems and plan your journey with our interactive map</p>
+                    
+                    <div class="accordion" id="destinationAccordion">
+                        <div class="accordion-item border-0 mb-3 shadow-sm">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                    <i class="fas fa-tree text-success me-2"></i>Candi Borobudur
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#destinationAccordion">
+                                <div class="accordion-body">
+                                    Borobudur is the world’s largest Buddhist temple and one of Indonesia’s most famous cultural landmarks. It is located in Magelang, Central Java, surrounded by lush green hills and volcanoes.</div>
+                            </div>
+                        </div>
+                        <div class="accordion-item border-0 mb-3 shadow-sm">
+                            <h2 class="accordion-header" id="headingTwo">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    <i class="fas fa-mountain text-success me-2"></i>Mountains
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#destinationAccordion">
+                                <div class="accordion-body">
+                                    Explore majestic mountain ranges with our expert guides. From the towering peaks of the Himalayas to the unique formations of Zhangjiajie, our tours offer breathtaking views and unforgettable experiences.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item border-0 mb-3 shadow-sm">
+                            <h2 class="accordion-header" id="headingThree">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    <i class="fas fa-water text-success me-2"></i>Coastal Areas
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#destinationAccordion">
+                                <div class="accordion-body">
+                                    Discover the wonders of marine ecosystems, from the Galapagos Islands to the Great Barrier Reef. Our coastal tours emphasize marine conservation and sustainable interaction with these fragile environments.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div data-aos="fade-left">
+                    <div class="map-wrapper d-flex flex-column gap-4">
+                        <div class="map-image-container">
+                            <img src="{% static 'img/z.jpg' %}" alt="Map 1" class="img-fluid rounded map-image">
+                        </div>
+                        <div class="map-image-container">
+                            <img src="{% static 'img/x.jpg' %}" alt="Map 2" class="img-fluid rounded map-image">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+
+
+<!-- Traveler Reviews & Testimonials -->
+<section class="reviews-section py-5 bg-pattern">
+    <div class="container">
+        <div class="text-center mb-5" data-aos="fade-up">
+            <h2 class="section-title">Traveler Stories</h2>
+            <p class="lead text-muted">Hear from explorers who've experienced our eco-adventures</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="100">
+                <div class="testimonial-card h-100">
+                    <div class="testimonial p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                        </div>
+                        <p class="fst-italic mb-4">"Our Amazon expedition was life-changing. The guides' knowledge of the rainforest ecosystem was impressive, and staying in eco-lodges gave us an authentic experience while knowing we were minimizing our impact."</p>
+                        <div class="d-flex align-items-center">
+                            <img src="{% static 'img/x.jpg' %}" class="rounded-circle me-3 profile-img" alt="Jennifer L.">
+                            <div>
+                                <h6 class="mb-1 fw-bold">Jennifer L.</h6>
+                                <div class="d-flex align-items-center text-muted small">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    <span>Amazon Rainforest Expedition</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="200">
+                <div class="testimonial-card h-100">
+                    <div class="testimonial p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                        </div>
+                        <p class="fst-italic mb-4">"The Galapagos tour exceeded all expectations. Swimming with sea lions and seeing giant tortoises in their natural habitat was incredible. The guides were passionate about conservation and made the whole experience educational."</p>
+                        <div class="d-flex align-items-center">
+                            <img src="{% static 'img/b.jpg' %}" class="rounded-circle me-3 profile-img" alt="Jennifer L.">
+                            <div>
+                                <h6 class="mb-1 fw-bold">Michael T.</h6>
+                                <div class="d-flex align-items-center text-muted small">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    <span>Galapagos Islands Discovery</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 col-md-6 mb-4" data-aos="fade-up" data-aos-delay="300">
+                <div class="testimonial-card h-100">
+                    <div class="testimonial p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star-half-alt text-warning"></i>
+                        </div>
+                        <p class="fst-italic mb-4">"New Zealand's landscapes are even more breathtaking in person. Our guide took us to hidden spots away from the crowds and shared fascinating insights about the local ecology. The Maori cultural experience was a highlight!"</p>
+                        <div class="d-flex align-items-center">
+                            <img src="{% static 'img/a.jpg' %}" class="rounded-circle me-3 profile-img" alt="Jennifer L.">
+                            <div>
+                                <h6 class="mb-1 fw-bold">Emily & David</h6>
+                                <div class="d-flex align-items-center text-muted small">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    <span>New Zealand Wilderness Explorer</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+      
+    </div>
+</section>
+
+
+{% endblock %}
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+<script>
+    // Initialize AOS animation library
+    AOS.init({
+        duration: 800,
+        easing: 'ease',
+        once: true,
+        offset: 100
+    });
+    
+    // Add scroll effect to Navbar
+    window.addEventListener('scroll', function() {
+        const navbar = document.querySelector('.navbar');
+        if (window.scrollY > 100) {
+            navbar.classList.add('scrolled');
+        } else {
+            navbar.classList.remove('scrolled');
+        }
+    });
+    
+    // Counter animation
+    const counters = document.querySelectorAll('.counter-number');
+    const speed = 200;
+    
+    counters.forEach(counter => {
+        const animate = () => {
+            const value = +counter.getAttribute('data-count');
+            const data = +counter.innerText;
+            
+            const time = value / speed;
+            if (data < value) {
+                counter.innerText = Math.ceil(data + time);
+                setTimeout(animate, 1);
+            } else {
+                counter.innerText = value;
+            }
+        }
+        
+        // Start counting when element is in viewport
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animate();
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+        
+        observer.observe(counter);
+    });
+    
+    // Reveal animation on scroll
+    const revealElements = document.querySelectorAll('.reveal');
+    
+    function reveal() {
+        revealElements.forEach((element) => {
+            const windowHeight = window.innerHeight;
+            const elementTop = element.getBoundingClientRect().top;
+            const elementVisible = 150;
+            
+            if (elementTop < windowHeight - elementVisible) {
+                element.classList.add("active");
+            }
+        });
+    }
+    
+    window.addEventListener("scroll", reveal);
+    reveal(); // Trigger on page load
+    
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+    
+    // Add Instagram hover effect
+    document.querySelectorAll('.instagram-card').forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.querySelector('.instagram-overlay').style.opacity = '1';
+        });
+        
+        card.addEventListener('mouseleave', () => {
+            card.querySelector('.instagram-overlay').style.opacity = '0';
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Tours - EcoTourism{% endblock %}
+
+{% block content %}
+<style>
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .print-only {
+            display: block !important;
+        }
+        .table th, .table td {
+            font-size: 12px;
+        }
+        .container {
+            max-width: none;
+            padding: 0;
+        }
+    }
+    .print-only {
+        display: none;
+    }
+</style>
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Manage Tours</h1>
+        <div class="no-print">
+            <button onclick="printTable()" class="btn btn-success me-2">
+                <i class="fas fa-print me-2"></i>Print Table
+            </button>
+            <a href="{% url 'tour_create' %}" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i>Create New Tour
+            </a>
+        </div>
+    </div>
+
+    <!-- Print Header (only visible when printing) -->
+    <div class="print-only text-center mb-4">
+        <h2>EcoTourism - Tours Management Report</h2>
+        <p>Generated on: <span id="print-date"></span></p>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow-sm mb-4 no-print">
+        <div class="card-body">
+            <form method="get" class="row g-3" id="filterForm">
+                <div class="col-md-3">
+                    <label for="category" class="form-label">Category</label>
+                    <select name="category" id="category" class="form-select">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"s" %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="active" {% if request.GET.status == "active" %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if request.GET.status == "inactive" %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="featured" class="form-label">Featured</label>
+                    <select name="featured" id="featured" class="form-select">
+                        <option value="">All Tours</option>
+                        <option value="yes" {% if request.GET.featured == "yes" %}selected{% endif %}>Featured Only</option>
+                        <option value="no" {% if request.GET.featured == "no" %}selected{% endif %}>Not Featured</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label for="search" class="form-label">Search</label>
+                    <input type="text" name="search" id="search" class="form-control" 
+                           placeholder="Search tours..." value="{{ request.GET.search }}">
+                </div>
+
+                <div class="col-12">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-search me-2"></i>Apply Filters
+                        </button>
+                        <button type="button" onclick="clearFilters()" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-2"></i>Clear Filters
+                        </button>
+                        <div class="ms-auto">
+                            <span class="text-muted">Total: {{ tours|length }} tour(s)</span>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tours Table -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="toursTable">
+                    <thead>
+                        <tr>
+                            <th>Tour Name</th>
+                            <th>Category</th>
+                            <th>Duration</th>
+                            <th>Price</th>
+                            <th>Status</th>
+                            <th>Featured</th>
+                            <th class="no-print">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tour in tours %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ tour.featured_image.url }}" alt="{{ tour.name }}" 
+                                         class="rounded me-2 no-print" style="width: 40px; height: 40px; object-fit: cover;">
+                                    <div>
+                                        <h6 class="mb-0">{{ tour.name }}</h6>
+                                        <small class="text-muted">{{ tour.category.name }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ tour.category.name }}</td>
+                            <td>{{ tour.duration }} days</td>
+                            <td>${{ tour.price }}</td>
+                            <td>
+                                <span class="badge {% if tour.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if tour.is_active %}Active{% else %}Inactive{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge {% if tour.is_featured %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {% if tour.is_featured %}Featured{% else %}Not Featured{% endif %}
+                                </span>
+                            </td>
+                            <td class="no-print">
+                                <div class="btn-group">
+                                    <a href="{% url 'tour_detail' tour.slug %}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'tour_edit' tour.slug %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'tour_delete' tour.slug %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="fas fa-search fa-2x mb-3"></i>
+                                    <p class="mb-0">No tours found matching your criteria.</p>
+                                    {% if request.GET %}
+                                    <button onclick="clearFilters()" class="btn btn-outline-primary btn-sm mt-2 no-print">
+                                        Clear Filters
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function printTable() {
+    // Set print date
+    document.getElementById('print-date').textContent = new Date().toLocaleDateString();
+    
+    // Print the page
+    window.print();
+}
+
+function clearFilters() {
+    // Clear all form inputs
+    document.getElementById('category').value = '';
+    document.getElementById('status').value = '';
+    document.getElementById('featured').value = '';
+    document.getElementById('search').value = '';
+    
+    // Submit the form to reload without filters
+    document.getElementById('filterForm').submit();
+}
+
+// Auto-submit form on filter change for better UX
+document.addEventListener('DOMContentLoaded', function() {
+    const filterForm = document.getElementById('filterForm');
+    const selectElements = filterForm.querySelectorAll('select');
+    
+    selectElements.forEach(select => {
+        select.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    });
+    
+    // Add debounce to search input
+    const searchInput = document.getElementById('search');
+    let searchTimeout;
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            filterForm.submit();
+        }, 500); // 500ms delay
+    });
+});
+</script>
+{% endblock %}

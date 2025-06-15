@@ -1,0 +1,191 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reviews for {{ destination.name }} - Tourism Website{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="row mt-4">
+        <!-- Destination Info Card -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h3>{{ destination.name }}</h3>
+                    <p class="text-muted"><i class="fas fa-map-marker-alt me-2"></i>{{ destination.location }}</p>
+                    
+                
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'destination_list' %}" class="btn btn-success">
+                            <i class="fas fa-star me-2"></i>Back to Destination List
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Reviews List -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">{{ reviews|length }} Reviews</h4>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-sort me-1"></i>Sort by
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="sortDropdown">
+                                <li><a class="dropdown-item" href="?sort=newest">Newest First</a></li>
+                                <li><a class="dropdown-item" href="?sort=oldest">Oldest First</a></li>
+                                <li><a class="dropdown-item" href="?sort=highest">Highest Rated</a></li>
+                                <li><a class="dropdown-item" href="?sort=lowest">Lowest Rated</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if reviews %}
+                        <div class="list-group list-group-flush">
+                            {% for review in reviews %}
+                                <div class="list-group-item p-4">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <div>
+                                            <h5 class="mb-1">{{ review.title }}</h5>
+                                            <div class="d-flex mb-2">
+                                                <div class="stars me-2">
+                                                    {% for i in '12345' %}
+                                                        {% if forloop.counter <= review.rating %}
+                                                            <i class="fas fa-star text-warning"></i>
+                                                        {% else %}
+                                                            <i class="far fa-star text-warning"></i>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                                <span class="text-muted small">{{ review.created_at|date:"F j, Y" }}</span>
+                                            </div>
+                                        </div>
+                                        {% if user.is_authenticated and user == review.user %}
+                                            <div>
+                                                <a href="{% url 'edit_destination_review' review_id=review.id %}" class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <p>{{ review.content }}</p>
+                                    </div>
+                                    
+                                    {% if review.images.all %}
+                                        <div class="review-images mb-3">
+                                            <div class="row g-2">
+                                                {% for image in review.images.all %}
+                                                    <div class="col-4 col-md-3 col-lg-2">
+                                                        <a href="{{ image.image.url }}" data-lightbox="review-{{ review.id }}" data-title="{{ image.caption }}">
+                                                            <img src="{{ image.image.url }}" alt="{{ image.caption }}" class="img-thumbnail">
+                                                        </a>
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <div class="d-flex align-items-center">
+                                        <div class="d-flex align-items-center text-muted">
+                                            <i class="fas fa-user-circle me-2 fs-5"></i>
+                                            <span>{{ review.user.get_full_name|default:review.user.username }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="p-5 text-center">
+                            <div class="mb-3">
+                                <i class="fas fa-comment-slash fa-3x text-muted"></i>
+                            </div>
+                            <h5>No Reviews Yet</h5>
+                            <p class="text-muted">Be the first to review this destination!</p>
+                            <a href="{% url 'create_destination_review' destination_id=destination.id %}" class="btn btn-success">
+                                <i class="fas fa-star me-2"></i>Write a Review
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                {% if reviews.has_other_pages %}
+                    <div class="card-footer bg-white">
+                        <nav aria-label="Review pagination">
+                            <ul class="pagination justify-content-center mb-0">
+                                {% if reviews.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ reviews.previous_page_number }}" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link" aria-hidden="true">&laquo;</span>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for i in reviews.paginator.page_range %}
+                                    {% if reviews.number == i %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ i }}</span>
+                                        </li>
+                                    {% else %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if reviews.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ reviews.next_page_number }}" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link" aria-hidden="true">&raquo;</span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Enable lightbox for review images
+    document.addEventListener('DOMContentLoaded', function() {
+        // This requires lightbox2 library to be included in your base template
+        // If you don't have lightbox2, you can install it or remove this code
+        if (typeof lightbox !== 'undefined') {
+            lightbox.option({
+                'resizeDuration': 200,
+                'wrapAround': true,
+                'albumLabel': "Image %1 of %2"
+            });
+        }
+    });
+</script>
+{% endblock %}

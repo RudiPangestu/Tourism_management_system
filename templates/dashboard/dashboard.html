@@ -1,0 +1,452 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Admin Dashboard - EcoTourism{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Stats Overview -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-sm-6">
+            <div class="card dashboard-card bookings">
+                <div class="card-body">
+                    <h3 class="stat-label">Total Bookings</h3>
+                    <div class="stat-value">{{ total_bookings }}</div>
+                    <div class="mt-3">
+                        <span class="text-muted">
+                            <i class="fas fa-calendar-check me-1"></i>All time bookings
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card dashboard-card revenue">
+                <div class="card-body">
+                    <h3 class="stat-label">Total Revenue</h3>
+                    <div class="stat-value">${{ total_revenue|floatformat:2 }}</div>
+                    <div class="mt-3">
+                        <span class="text-muted">
+                            <i class="fas fa-dollar-sign me-1"></i>Total confirmed bookings
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card dashboard-card users">
+                <div class="card-body">
+                    <h3 class="stat-label">Total Users</h3>
+                    <div class="stat-value">{{ total_users }}</div>
+                    <div class="mt-3">
+                        <span class="text-muted">
+                            <i class="fas fa-users me-1"></i>Registered users
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6">
+            <div class="card dashboard-card destinations">
+                <div class="card-body">
+                    <h3 class="stat-label">Active Tours</h3>
+                    <div class="stat-value">{{ total_tours }}</div>
+                    <div class="mt-3">
+                        <span class="text-muted">
+                            <i class="fas fa-map-marked-alt me-1"></i>Available for booking
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Bookings -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="h4 mb-0">Recent Bookings</h2>
+                        <a href="{% url 'manage_bookings' %}" class="btn btn-sm btn-primary">View All</a>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Booking ID</th>
+                                    <th>Customer</th>
+                                    <th>Tour</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in recent_bookings %}
+                                <tr>
+                                    <td>{{ booking.confirmation_code }}</td>
+                                    <td>{{ booking.user.username }}</td>
+                                    <td>{{ booking.tour.name }}</td>
+                                    <td>{{ booking.booking_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        <span class="badge {% if booking.status == 'confirmed' %}bg-success{% elif booking.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                                            {{ booking.status|title }}
+                                        </span>
+                                    </td>
+                                    <td>${{ booking.total_price }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">No recent bookings</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Tours -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="h4 mb-0">Upcoming Tours</h2>
+                        <a href="{% url 'manage_tours' %}" class="btn btn-sm btn-primary">View All</a>
+                    </div>
+                    {% for tour_date in upcoming_tours %}
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-light rounded p-2 me-3">
+                            <i class="fas fa-calendar fa-lg text-primary"></i>
+                        </div>
+                        <div>
+                            <h6 class="mb-1">{{ tour_date.tour.name }}</h6>
+                            <small class="text-muted">
+                                {{ tour_date.start_date|date:"M d" }} - {{ tour_date.end_date|date:"M d, Y" }}
+                            </small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-calendar-alt fa-2x mb-2"></i>
+                        <p class="mb-0">No upcoming tours</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Revenue Chart -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="h4 mb-0">Revenue Overview ({{ "now"|date:"Y" }})</h2>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <button type="button" class="btn btn-outline-primary active" id="monthlyBtn">Monthly Review</button>
+                                {% comment %} <button type="button" class="btn btn-outline-primary" id="yearlyBtn">Yearly</button> {% endcomment %}
+                        </div>
+                    </div>
+                    <div style="height: 300px; position: relative;">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Showing confirmed bookings only
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Destinations -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="h4 mb-4">Popular Destinations</h2>
+                    {% for destination in popular_destinations %}
+                    <div class="d-flex align-items-center mb-3">
+                        {% if destination.featured_image %}
+                            <img src="{{ destination.featured_image.url }}" class="rounded" width="50" height="50" alt="{{ destination.name }}" style="object-fit: cover;">
+                        {% else %}
+                            <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                <i class="fas fa-map-marker-alt text-muted"></i>
+                            </div>
+                        {% endif %}
+                        <div class="ms-3 flex-grow-1">
+                            <h6 class="mb-1">{{ destination.name }}</h6>
+                            <small class="text-muted">{{ destination.booking_count }} booking{{ destination.booking_count|pluralize }}</small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-map-marked-alt fa-2x mb-2"></i>
+                        <p class="mb-0">No booking data available</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Stats Row -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="h4 mb-4">Quick Stats</h2>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="text-center p-3 bg-light rounded">
+                                <div class="h5 mb-1 text-primary">{{ avg_tour_rating|floatformat:1 }}</div>
+                                <small class="text-muted">Avg Tour Rating</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center p-3 bg-light rounded">
+                                <div class="h5 mb-1 text-success">{{ avg_destination_rating|floatformat:1 }}</div>
+                                <small class="text-muted">Avg Destination Rating</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center p-3 bg-light rounded">
+                                <div class="h5 mb-1 text-info">{{ total_destinations }}</div>
+                                <small class="text-muted">Total Destinations</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center p-3 bg-light rounded">
+                                <div class="h5 mb-1 text-warning">{{ upcoming_tours.count }}</div>
+                                <small class="text-muted">Upcoming Tours</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="h4 mb-4">Recent Activity</h2>
+                    <div class="timeline">
+                        {% for booking in recent_bookings|slice:":3" %}
+                        <div class="d-flex mb-3">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                    <i class="fas fa-shopping-cart text-white" style="font-size: 14px;"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="small">
+                                    <strong>{{ booking.user.username }}</strong> booked 
+                                    <strong>{{ booking.tour.name }}</strong>
+                                </div>
+                                <div class="small text-muted">{{ booking.booking_date|timesince }} ago</div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-muted py-3">
+                            <i class="fas fa-clock fa-2x mb-2"></i>
+                            <p class="mb-0">No recent activity</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let revenueChart;
+    
+    // Get revenue data from Django template
+    const monthlyRevenueData = {{ monthly_revenue|safe }};
+    const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    function renderRevenueChart() {
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+
+        // Destroy existing chart if it exists
+        if (revenueChart) {
+            revenueChart.destroy();
+        }
+
+        // Create gradient
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(56, 161, 105, 0.2)');
+        gradient.addColorStop(1, 'rgba(56, 161, 105, 0.02)');
+
+        // Create new chart with real data
+        revenueChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: monthLabels,
+                datasets: [{
+                    label: 'Revenue ($)',
+                    data: monthlyRevenueData,
+                    borderColor: '#38a169',
+                    backgroundColor: gradient,
+                    tension: 0.4,
+                    fill: true,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#38a169',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: '#38a169',
+                        borderWidth: 1,
+                        cornerRadius: 8,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return 'Revenue: $' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.1)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#666666',
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false,
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#666666'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Initialize chart when DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        renderRevenueChart();
+        
+        // Add some interactivity to the stats cards
+        const statCards = document.querySelectorAll('.dashboard-card');
+        statCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.transition = 'transform 0.2s ease';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    });
+
+    // Refresh chart data (you can call this function to update chart with new data)
+    function refreshRevenueChart() {
+        fetch('/dashboard/api/revenue-data/')
+            .then(response => response.json())
+            .then(data => {
+                revenueChart.data.labels = data.labels;
+                revenueChart.data.datasets[0].data = data.data;
+                revenueChart.update();
+            })
+            .catch(error => {
+                console.error('Error fetching revenue data:', error);
+            });
+    }
+</script>
+
+<style>
+.dashboard-card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.2s ease;
+}
+
+.dashboard-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.dashboard-card.bookings {
+    border-left: 4px solid #3182ce;
+}
+
+.dashboard-card.revenue {
+    border-left: 4px solid #38a169;
+}
+
+.dashboard-card.users {
+    border-left: 4px solid #d69e2e;
+}
+
+.dashboard-card.destinations {
+    border-left: 4px solid #805ad5;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2d3748;
+    line-height: 1;
+}
+
+.timeline {
+    position: relative;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 16px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, #e2e8f0, transparent);
+}
+</style>
+{% endblock %}

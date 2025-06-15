@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Reviews - EcoTourism{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Tour Reviews -->
+            <section class="mb-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="h3">Tour Reviews</h2>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'create_tour_review' tour.id %}" class="btn btn-success">
+                        Write a Review
+                    </a>
+                    {% endif %}
+                </div>
+
+                {% for review in tour_reviews %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <div>
+                                <h5 class="card-title mb-1">{{ review.title }}</h5>
+                                <p class="text-muted mb-0">
+                                    <small>
+                                        By {{ review.user.username }} on {{ review.created_at|date:"F d, Y" }}
+                                    </small>
+                                </p>
+                            </div>
+                            <div class="text-warning">
+                                {% for i in review.rating|rjust:5 %}★{% endfor %}
+                            </div>
+                        </div>
+                        <p class="card-text">{{ review.content }}</p>
+                        {% if review.images.exists %}
+                        <div class="row g-2 mt-3">
+                            {% for image in review.images.all %}
+                            <div class="col-4">
+                                <img src="{{ image.image.url }}" class="img-fluid rounded" alt="{{ image.caption }}">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">No tour reviews yet.</p>
+                {% endfor %}
+            </section>
+
+            <!-- Destination Reviews -->
+            <section>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="h3">Destination Reviews</h2>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'create_destination_review' destination.id %}" class="btn btn-success">
+                        Write a Review
+                    </a>
+                    {% endif %}
+                </div>
+
+                {% for review in destination_reviews %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3">
+                            <div>
+                                <h5 class="card-title mb-1">{{ review.title }}</h5>
+                                <p class="text-muted mb-0">
+                                    <small>
+                                        By {{ review.user.username }} on {{ review.created_at|date:"F d, Y" }}
+                                    </small>
+                                </p>
+                            </div>
+                            <div class="text-warning">
+                                {% for i in review.rating|rjust:5 %}★{% endfor %}
+                            </div>
+                        </div>
+                        <p class="card-text">{{ review.content }}</p>
+                        {% if review.images.exists %}
+                        <div class="row g-2 mt-3">
+                            {% for image in review.images.all %}
+                            <div class="col-4">
+                                <img src="{{ image.image.url }}" class="img-fluid rounded" alt="{{ image.caption }}">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">No destination reviews yet.</p>
+                {% endfor %}
+            </section>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Review Stats -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Review Statistics</h3>
+                    <div class="mb-4">
+                        <h4 class="h6">Tour Reviews</h4>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="text-warning me-2">
+                                {% for i in avg_tour_rating|rjust:5 %}★{% endfor %}
+                            </div>
+                            <span class="text-muted">{{ avg_tour_rating|floatformat:1 }} out of 5</span>
+                        </div>
+                        <small class="text-muted">Based on {{ tour_reviews.count }} reviews</small>
+                    </div>
+                    <div>
+                        <h4 class="h6">Destination Reviews</h4>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="text-warning me-2">
+                                {% for i in avg_destination_rating|rjust:5 %}★{% endfor %}
+                            </div>
+                            <span class="text-muted">{{ avg_destination_rating|floatformat:1 }} out of 5</span>
+                        </div>
+                        <small class="text-muted">Based on {{ destination_reviews.count }} reviews</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Review Guidelines -->
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Review Guidelines</h3>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Share your personal experience
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Be specific and detailed
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            Include photos if possible
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-times-circle text-danger me-2"></i>
+                            Avoid offensive language
+                        </li>
+                        <li>
+                            <i class="fas fa-times-circle text-danger me-2"></i>
+                            Don't include personal information
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

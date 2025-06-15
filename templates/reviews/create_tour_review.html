@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Write Review - EcoTourism{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="h4 mb-4">Write a Review for {{ tour.name }}</h2>
+
+                    <!-- Tour Summary -->
+                    <div class="bg-light p-3 rounded mb-4">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <img src="{{ tour.featured_image.url }}" class="img-fluid rounded" alt="{{ tour.name }}">
+                            </div>
+                            <div class="col-md-9">
+                                <h3 class="h6 mb-2">{{ tour.name }}</h3>
+                                <p class="text-muted mb-0">{{ tour.description|truncatewords:30 }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+
+                        <h3 class="h5 mt-4 mb-3">Add Photos</h3>
+                        {{ formset.management_form }}
+                        <div id="images-container">
+                            {% for form in formset %}
+                            <div class="image-form mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        {{ form|crispy }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <button type="button" id="add-image" class="btn btn-outline-success mb-4">
+                            <i class="fas fa-plus me-2"></i>Add More Photos
+                        </button>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-success">Submit Review</button>
+                            <a href="{% url 'tour_detail' tour.slug %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Review Guidelines -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Review Guidelines</h3>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-3">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <strong>Be Specific:</strong>
+                            <p class="text-muted small mb-0">Share detailed experiences about the tour, guides, and locations.</p>
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <strong>Be Honest:</strong>
+                            <p class="text-muted small mb-0">Your honest feedback helps us improve and helps other travelers.</p>
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-check text-success me-2"></i>
+                            <strong>Add Photos:</strong>
+                            <p class="text-muted small mb-0">Photos help other travelers get a better idea of the experience.</p>
+                        </li>
+                        <li class="mb-3">
+                            <i class="fas fa-times text-danger me-2"></i>
+                            <strong>Avoid:</strong>
+                            <p class="text-muted small mb-0">Personal information, offensive language, or irrelevant content.</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('add-image').addEventListener('click', function() {
+        const container = document.getElementById('images-container');
+        const forms = container.getElementsByClassName('image-form');
+        const formNum = forms.length;
+        const totalForms = document.getElementById('id_images-TOTAL_FORMS');
+        
+        // Clone the first form
+        const newForm = forms[0].cloneNode(true);
+        
+        // Update form index
+        newForm.innerHTML = newForm.innerHTML.replace(/-0-/g, `-${formNum}-`);
+        newForm.innerHTML = newForm.innerHTML.replace(/_0_/g, `_${formNum}_`);
+        
+        // Clear form values
+        const inputs = newForm.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.value = '';
+        });
+        
+        // Add new form to container
+        container.appendChild(newForm);
+        
+        // Update total forms
+        totalForms.value = formNum + 1;
+    });
+</script>
+{% endblock %}

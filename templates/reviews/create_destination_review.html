@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Review {{ destination.name }} - Tourism Website{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h2 class="mb-0">Review {{ destination.name }}</h2>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <div class="mb-4">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h4>{{ destination.name }}</h4>
+                                <p class="text-muted">{{ destination.location }}</p>
+                                <div class="small mb-2">
+                                    {% if destination.reviews.count > 0 %}
+                                        {% with avg_rating=destination.get_average_rating %}
+                                            <div class="mb-2">
+                                                <div class="stars">
+                                                    {% for i in '12345' %}
+                                                        {% if forloop.counter <= avg_rating %}
+                                                            <i class="fas fa-star text-warning"></i>
+                                                        {% elif forloop.counter <= avg_rating|add:0.5 %}
+                                                            <i class="fas fa-star-half-alt text-warning"></i>
+                                                        {% else %}
+                                                            <i class="far fa-star text-warning"></i>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                    <span class="ms-2">{{ avg_rating|floatformat:1 }} ({{ destination.reviews.count }} reviews)</span>
+                                                </div>
+                                            </div>
+                                        {% endwith %}
+                                    {% else %}
+                                        <p class="text-muted small">No reviews yet</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label fw-bold">Title</label>
+                            <input type="text" name="{{ form.title.name }}" id="{{ form.title.id_for_label }}" class="form-control" value="{{ form.title.value|default:'' }}" required>
+                            {% if form.title.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.title.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.content.id_for_label }}" class="form-label fw-bold">Your Review</label>
+                            {{ form.content }}
+                            {% if form.content.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.content.errors }}
+                                </div>
+                            {% endif %}
+                            <small class="text-muted">Share your experience, tips, or anything that might help other travelers</small>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="{{ form.rating.id_for_label }}" class="form-label fw-bold">Rating</label>
+                            <div class="rating-selector">
+                                <select name="{{ form.rating.name }}" id="{{ form.rating.id_for_label }}" class="form-select" required>
+                                    {% for value, text in form.rating.field.choices %}
+                                    <option value="{{ value }}" {% if form.rating.value == value|stringformat:"i" %}selected{% endif %}>{{ text }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% if form.rating.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.rating.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <h5>Add Photos</h5>
+                        <p class="text-muted small">Share your photos of this destination (optional)</p>
+                        
+                        {{ formset.management_form }}
+                        
+                        <div class="row photo-formset">
+                            {% for form in formset %}
+                                <div class="col-md-4 mb-3 photo-form">
+                                    <div class="card h-100">
+                                        <div class="card-body">
+                                            {% for hidden in form.hidden_fields %}
+                                                {{ hidden }}
+                                            {% endfor %}
+                                            
+                                            <div class="mb-3">
+                                                <label for="{{ form.image.id_for_label }}" class="form-label">Photo</label>
+                                                <input type="file" name="{{ form.image.name }}" id="{{ form.image.id_for_label }}" class="form-control">
+                                                {% if form.image.errors %}
+                                                    <div class="text-danger small mt-1">
+                                                        {{ form.image.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            <div class="mb-2">
+                                                <label for="{{ form.caption.id_for_label }}" class="form-label">Caption</label>
+                                                <input type="text" name="{{ form.caption.name }}" id="{{ form.caption.id_for_label }}" class="form-control" value="{{ form.caption.value|default:'' }}">
+                                                {% if form.caption.errors %}
+                                                    <div class="text-danger small mt-1">
+                                                        {{ form.caption.errors }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            
+                                            {% if form.instance.pk %}
+                                                <div class="mb-2">
+                                                    <img src="{{ form.instance.image.url }}" alt="Review Image" class="img-thumbnail">
+                                                </div>
+                                            {% endif %}
+                                            
+                                            {% if form.can_delete %}
+                                                <div class="form-check mb-1">
+                                                    <input type="checkbox" name="{{ form.DELETE.name }}" id="{{ form.DELETE.id_for_label }}" class="form-check-input">
+                                                    <label class="form-check-label" for="{{ form.DELETE.id_for_label }}">
+                                                        Delete this photo
+                                                    </label>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'destination_reviews' destination_id=destination.id %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Reviews
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-paper-plane me-2"></i>Submit Review
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Preview image when uploaded
+    document.addEventListener('DOMContentLoaded', function() {
+        const photoForms = document.querySelectorAll('.photo-form');
+        
+        photoForms.forEach(form => {
+            const imageInput = form.querySelector('input[type="file"]');
+            imageInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // Remove existing preview if any
+                        const existingPreview = form.querySelector('.image-preview');
+                        if (existingPreview) {
+                            existingPreview.remove();
+                        }
+                        
+                        // Create new preview
+                        const preview = document.createElement('div');
+                        preview.className = 'image-preview mb-2 mt-2';
+                        preview.innerHTML = `<img src="${e.target.result}" class="img-thumbnail" alt="Preview">`;
+                        
+                        // Insert preview after file input
+                        imageInput.parentNode.appendChild(preview);
+                    }
+                    reader.readAsDataURL(file);
+                }
+            });
+        });
+        
+        // Add visual indicator for ratings
+        const ratingSelect = document.querySelector('#id_rating');
+        if (ratingSelect) {
+            ratingSelect.addEventListener('change', function() {
+                const starContainer = document.querySelector('.rating-visual');
+                if (!starContainer) {
+                    const visualRating = document.createElement('div');
+                    visualRating.className = 'rating-visual mt-2';
+                    ratingSelect.parentNode.appendChild(visualRating);
+                }
+                
+                updateRatingVisual();
+            });
+            
+            // Initialize rating visual
+            function updateRatingVisual() {
+                const rating = parseInt(ratingSelect.value);
+                const starContainer = document.querySelector('.rating-visual') || document.createElement('div');
+                starContainer.className = 'rating-visual mt-2';
+                starContainer.innerHTML = '';
+                
+                for (let i = 1; i <= 5; i++) {
+                    const star = document.createElement('i');
+                    if (i <= rating) {
+                        star.className = 'fas fa-star text-warning me-1';
+                    } else {
+                        star.className = 'far fa-star text-warning me-1';
+                    }
+                    starContainer.appendChild(star);
+                }
+                
+                if (!document.querySelector('.rating-visual')) {
+                    ratingSelect.parentNode.appendChild(starContainer);
+                }
+            }
+            
+            // Initialize on page load
+            updateRatingVisual();
+        }
+    });
+</script>
+{% endblock %}

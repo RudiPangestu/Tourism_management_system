@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Cancel Booking - EcoTourism{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <div class="mb-4">
+                            <i class="fas fa-exclamation-triangle text-warning fa-3x"></i>
+                        </div>
+                        <h2 class="h3 mb-3">Cancel Booking</h2>
+                        <p class="text-muted mb-0">Are you sure you want to cancel this booking?</p>
+                    </div>
+
+                    <div class="bg-light p-4 rounded mb-4">
+                        <h3 class="h5 mb-3">Booking Details</h3>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <p class="mb-1"><strong>Booking ID:</strong> {{ booking.confirmation_code }}</p>
+                                <p class="mb-1"><strong>Tour:</strong> {{ booking.tour.name }}</p>
+                                <p class="mb-0"><strong>Date:</strong> {{ booking.tour_date.start_date|date:"F d, Y" }}</p>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <p class="mb-1"><strong>Status:</strong> {{ booking.status|title }}</p>
+                                <p class="mb-1"><strong>Participants:</strong> {{ booking.number_of_people }}</p>
+                                <p class="mb-0"><strong>Total Amount:</strong> ${{ booking.total_price }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning mb-4">
+                        <h4 class="h6 mb-2">Please Note:</h4>
+                        <ul class="mb-0">
+                            <li>Cancellation may be subject to fees depending on the timing</li>
+                            <li>Refunds will be processed according to our refund policy</li>
+                            <li>This action cannot be undone</li>
+                        </ul>
+                    </div>
+
+                    <form method="post" class="text-center">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger me-2">Confirm Cancellation</button>
+                        <a href="{% url 'booking_detail' booking.id %}" class="btn btn-outline-secondary">Keep Booking</a>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

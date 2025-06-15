@@ -1,0 +1,521 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Booking Statistics - EcoTourism{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    :root {
+        --primary-color: #38A169;
+        --secondary-color: #2C7A7B;
+        --accent-color: #F6AD55;
+        --light-bg: #F7FAFC;
+        --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+    
+    body {
+        background-color: #f8f9fa;
+        color: #333;
+    }
+    
+    .stats-card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: var(--card-shadow);
+        transition: transform 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .summary-card {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .summary-card .icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+    }
+    
+    .summary-card .icon.blue {
+        background-color: rgba(49, 130, 206, 0.1);
+        color: #3182CE;
+    }
+    
+    .summary-card .icon.green {
+        background-color: rgba(56, 161, 105, 0.1);
+        color: #38A169;
+    }
+    
+    .summary-card .icon.orange {
+        background-color: rgba(246, 173, 85, 0.1);
+        color: #F6AD55;
+    }
+    
+    .summary-card .icon.red {
+        background-color: rgba(229, 62, 62, 0.1);
+        color: #E53E3E;
+    }
+    
+    .summary-card .value {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 5px;
+    }
+    
+    .summary-card .label {
+        color: #718096;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .chart-container {
+        position: relative;
+        min-height: 300px;
+    }
+    
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+    }
+    
+    .status-badge {
+        padding: 5px 10px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .status-badge.confirmed {
+        background-color: rgba(56, 161, 105, 0.1);
+        color: #38A169;
+    }
+    
+    .status-badge.pending {
+        background-color: rgba(246, 173, 85, 0.1);
+        color: #F6AD55;
+    }
+    
+    .status-badge.cancelled {
+        background-color: rgba(229, 62, 62, 0.1);
+        color: #E53E3E;
+    }
+    
+    .status-badge.completed {
+        background-color: rgba(128, 90, 213, 0.1);
+        color: #805AD5;
+    }
+    
+    .table th {
+        font-weight: 600;
+        color: #4A5568;
+        border-top: none;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(56, 161, 105, 0.05);
+    }
+    
+    .custom-tab {
+        border: none;
+        padding: 10px 20px;
+        font-weight: 500;
+        color: #718096;
+        border-radius: 0;
+    }
+    
+    .custom-tab.active {
+        color: var(--primary-color);
+        border-bottom: 2px solid var(--primary-color);
+        background: transparent;
+    }
+    
+    .stats-filter {
+        background: white;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: var(--card-shadow);
+    }
+    
+    .date-filter {
+        display: flex;
+        align-items: center;
+    }
+    
+    .date-filter .form-control {
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+        padding: 8px 12px;
+    }
+    
+    .stat-trend {
+        display: flex;
+        align-items: center;
+        font-size: 0.85rem;
+        margin-top: 8px;
+    }
+    
+    .stat-trend.positive {
+        color: #38A169;
+    }
+    
+    .stat-trend.negative {
+        color: #E53E3E;
+    }
+    
+    /* Custom Tooltip Styles */
+    .custom-tooltip {
+        position: absolute;
+        background: white;
+        border-radius: 6px;
+        padding: 10px 15px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        pointer-events: none;
+        z-index: 10;
+        transition: all 0.2s ease;
+        opacity: 0;
+    }
+    
+    .custom-tooltip.active {
+        opacity: 1;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+        .summary-card .value {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Booking Statistics</h1>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Booking Stats</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" id="downloadReportBtn">
+                <i class="fas fa-download me-2"></i>Export Report
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-success dropdown-toggle" type="button" id="timeRangeDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-calendar-alt me-2"></i>Last 30 Days
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="timeRangeDropdown">
+                    <li><a class="dropdown-item" href="#">Today</a></li>
+                    <li><a class="dropdown-item" href="#">Last 7 Days</a></li>
+                    <li><a class="dropdown-item active" href="#">Last 30 Days</a></li>
+                    <li><a class="dropdown-item" href="#">This Month</a></li>
+                    <li><a class="dropdown-item" href="#">Last 3 Months</a></li>
+                    <li><a class="dropdown-item" href="#">This Year</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#">Custom Range</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Summary Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card stats-card summary-card h-100">
+                <div class="card-body">
+                    <div class="icon blue">
+                        <i class="fas fa-calendar-check fa-lg"></i>
+                    </div>
+                    <div class="value">{{ total_bookings }}</div>
+                    <div class="label">Total Bookings</div>
+                    <div class="stat-trend positive">
+                        <i class="fas fa-arrow-up me-1"></i>12% from last month
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card stats-card summary-card h-100">
+                <div class="card-body">
+                    <div class="icon green">
+                        <i class="fas fa-dollar-sign fa-lg"></i>
+                    </div>
+                    <div class="value">${{ total_revenue|floatformat:2 }}</div>
+                    <div class="label">Total Revenue</div>
+                    <div class="stat-trend positive">
+                        <i class="fas fa-arrow-up me-1"></i>8% from last month
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card stats-card summary-card h-100">
+                <div class="card-body">
+                    <div class="icon orange">
+                        <i class="fas fa-users fa-lg"></i>
+                    </div>
+                    <div class="value">{{ avg_booking_value|default:"$248.50" }}</div>
+                    <div class="label">Average Booking Value</div>
+                    <div class="stat-trend positive">
+                        <i class="fas fa-arrow-up me-1"></i>5% from last month
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-md-6">
+            <div class="card stats-card summary-card h-100">
+                <div class="card-body">
+                    <div class="icon red">
+                        <i class="fas fa-ban fa-lg"></i>
+                    </div>
+                    <div class="value">{{ cancellation_rate|default:"8.3" }}%</div>
+                    <div class="label">Cancellation Rate</div>
+                    <div class="stat-trend negative">
+                        <i class="fas fa-arrow-down me-1"></i>2.1% from last month
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Booking Trends Chart -->
+        <div class="col-lg-8 mb-4">
+            <div class="card stats-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="h5 mb-0">Booking & Revenue Trends</h2>
+                        <div class="btn-group" role="group" aria-label="Trend view options">
+                            <button type="button" class="btn btn-sm btn-outline-secondary active" data-view="both">Both</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-view="bookings">Bookings Only</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" data-view="revenue">Revenue Only</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="bookingTrendsChart"></canvas>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-0">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="text-muted small">Peak Day</div>
+                            <div class="fw-bold">Saturday</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-muted small">Peak Time</div>
+                            <div class="fw-bold">18:00 - 20:00</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="text-muted small">Avg. Processing Time</div>
+                            <div class="fw-bold">5.2 mins</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Status Distribution -->
+        <div class="col-lg-4 mb-4">
+            <div class="card stats-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="h5 mb-0">Booking Status</h2>
+                        <button type="button" class="btn btn-sm btn-link text-muted">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="bookingStatusChart"></canvas>
+                    </div>
+                    
+                    <div class="mt-4">
+                        {% for status in booking_by_status %}
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <span class="status-badge {{ status.status }}">{{ status.status|title }}</span>
+                            </div>
+                            <div class="fw-bold">{{ status.count }}</div>
+                        </div>
+                        <div class="progress mb-3">
+                            <div class="progress-bar {% if status.status == 'confirmed' %}bg-success{% elif status.status == 'pending' %}bg-warning{% elif status.status == 'cancelled' %}bg-danger{% else %}bg-purple{% endif %}" 
+                                 role="progressbar" 
+                                 style="width: {% widthratio status.count total_bookings 100 %}%" 
+                                 aria-valuenow="{{ status.count }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="{{ total_bookings }}"></div>
+                        </div>
+                        {% empty %}
+                        <!-- Sample data for preview -->
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <span class="status-badge confirmed">Confirmed</span>
+                            </div>
+                            <div class="fw-bold">65</div>
+                        </div>
+                        <div class="progress mb-3">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 65%"></div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <span class="status-badge pending">Pending</span>
+                            </div>
+                            <div class="fw-bold">25</div>
+                        </div>
+                        <div class="progress mb-3">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 25%"></div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <span class="status-badge cancelled">Cancelled</span>
+                            </div>
+                            <div class="fw-bold">10</div>
+                        </div>
+                        <div class="progress mb-3">
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: 10%"></div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Monthly Revenue & Booking Analysis -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card stats-card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="h5 mb-0">Monthly Revenue & Booking Analysis</h2>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-sm btn-outline-secondary active">2025</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary">2024</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary">2023</button>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="monthlyAnalysisChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Conversion Funnel -->
+        <div class="col-lg-6 mb-4">
+            <div class="card stats-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="h5 mb-0">Booking Conversion Funnel</h2>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-link text-muted" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#">Detailed Report</a></li>
+                                <li><a class="dropdown-item" href="#">Export Data</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="conversionFunnelChart"></canvas>
+                    </div>
+                    <div class="row text-center mt-4">
+                        <div class="col-4">
+                            <div class="fw-bold mb-1">68%</div>
+                            <div class="small text-muted">Search to View</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="fw-bold mb-1">42%</div>
+                            <div class="small text-muted">View to Cart</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="fw-bold mb-1">85%</div>
+                            <div class="small text-muted">Cart to Checkout</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Method Distribution -->
+        <div class="col-lg-6 mb-4">
+            <div class="card stats-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="h5 mb-0">Payment Method Distribution</h2>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-link text-muted" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#">Detailed Report</a></li>
+                                <li><a class="dropdown-item" href="#">Export Data</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-7">
+                            <div class="chart-container">
+                                <canvas id="paymentMethodChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="mt-3 mt-md-0">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-success rounded-circle me-2" style="width: 10px; height: 10px;"></div>
+                                        <span>Credit Card</span>
+                                    </div>
+                                    <span class="fw-bold">55%</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-success rounded-circle me-2" style="width: 10px; height: 10px;"></div>
+                                        <span>PayPal</span>
+                                    </div>
+                                    <span class="fw-bold">25%</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-info rounded-circle me-2" style="width: 10px; height: 10px;"></div>
+                                        <span>Bank Transfer</span>
+                                    </div>
+                                    <span class="fw-bold">15%</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-secondary rounded-circle me-2" style="width: 10px; height: 10px;"></div>
+                                        <span>Other</span>
+                                    </div>
+                                    <span class="fw-bold">5%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

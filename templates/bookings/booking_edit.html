@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Edit Booking - EcoTourism{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h2 class="h4 mb-4">Edit Booking #{{ booking.confirmation_code }}</h2>
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        
+                        <h3 class="h5 mt-4 mb-3">Participant Information</h3>
+                        {{ participant_formset.management_form }}
+                        <div id="participants-container">
+                            {% for form in participant_formset %}
+                            <div class="participant-form mb-4">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h4 class="h6 mb-3">Participant {{ forloop.counter }}</h4>
+                                        {{ form|crispy }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-success">Save Changes</button>
+                            <a href="{% url 'booking_detail' booking.id %}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Booking Summary -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Booking Summary</h3>
+                    <div class="mb-3">
+                        <img src="{{ booking.tour.featured_image.url }}" class="img-fluid rounded" alt="{{ booking.tour.name }}">
+                    </div>
+                    <h4 class="h6 mb-2">{{ booking.tour.name }}</h4>
+                    <p class="text-muted mb-3">
+                        {{ booking.tour_date.start_date|date:"F d, Y" }} - {{ booking.tour_date.end_date|date:"F d, Y" }}
+                    </p>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Status:</span>
+                        <span class="badge {% if booking.status == 'confirmed' %}bg-success{% elif booking.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                            {{ booking.status|title }}
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Price per person:</span>
+                        <span class="text-success">${{ booking.tour_date.price }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Total price:</span>
+                        <span class="h5 text-success mb-0">${{ booking.total_price }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Important Information -->
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Important Information</h3>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-info-circle text-success me-2"></i>
+                            Changes to your booking may affect the total price
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-info-circle text-success me-2"></i>
+                            All changes require review and approval
+                        </li>
+                        <li>
+                            <i class="fas fa-info-circle text-success me-2"></i>
+                            Contact support for special requests
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

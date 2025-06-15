@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ tour.name }} - EcoTourism{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="tour-hero position-relative" style="background-image: url('{{ tour.featured_image.url }}');">
+    <div class="overlay"></div>
+    <div class="container position-relative py-5 text-white">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <span class="badge bg-success mb-2">{{ tour.category.name }}</span>
+                <h1 class="display-4 mb-3">{{ tour.name }}</h1>
+                <div class="d-flex align-items-center gap-4">
+                    <div>
+                        <i class="fas fa-clock me-2"></i>
+                        {{ tour.duration }} days
+                    </div>
+                    <div>
+                        <i class="fas fa-users me-2"></i>
+                        Max {{ tour.group_size }} people
+                    </div>
+                    <div>
+                        <i class="fas fa-mountain me-2"></i>
+                        {{ tour.difficulty }}
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <div class="price-box bg-white text-dark p-4 rounded">
+                    <h3 class="mb-3">Price per person</h3>
+                    <div class="h2 text-success mb-3">
+                        ${{ tour.price }}
+                        {% if tour.discount_price %}
+                        <small class="text-muted text-decoration-line-through">${{ tour.discount_price }}</small>
+                        {% endif %}
+                    </div>
+                    <a href="#available-dates" class="btn btn-success btn-lg w-100">Book Now</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Overview -->
+            <section class="mb-5">
+                <h2 class="h3 mb-4">Tour Overview</h2>
+                <p class="lead">{{ tour.description }}</p>
+            </section>
+
+            <!-- Itinerary -->
+            <section class="mb-5">
+                <h2 class="h3 mb-4">Itinerary</h2>
+                <div class="bg-light p-4 rounded">
+                    {{ tour.itinerary|linebreaks }}
+                </div>
+            </section>
+
+            <!-- Included/Not Included -->
+            <section class="mb-5">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h2 class="h3 mb-4">What's Included</h2>
+                        <div class="bg-light p-4 rounded h-100">
+                            {{ tour.included|linebreaks }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h2 class="h3 mb-4">What's Not Included</h2>
+                        <div class="bg-light p-4 rounded h-100">
+                            {{ tour.not_included|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Destinations -->
+            {% if tour.destinations.exists %}
+            <section class="mb-5">
+                <h2 class="h3 mb-4">Destinations</h2>
+                <div class="row">
+                    {% for destination in tour.destinations.all %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            <img src="{{ destination.featured_image.url }}" class="card-img-top" alt="{{ destination.name }}">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ destination.name }}</h5>
+                                <p class="card-text">{{ destination.description|truncatewords:30 }}</p>
+                                <a href="{% url 'destination_detail' destination.slug %}" class="btn btn-outline-success btn-sm">
+                                    Learn More
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- Reviews -->
+            <section class="mb-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="h3 mb-0">Reviews</h2>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'create_tour_review' tour.id %}" class="btn btn-success">
+                        Write a Review
+                    </a>
+                    {% endif %}
+                </div>
+
+                {% for review in tour.reviews.all %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <h5 class="card-title mb-0">{{ review.title }}</h5>
+                            <div class="text-warning">
+                                {% for i in review.rating|rjust:5 %}★{% endfor %}
+                            </div>
+                        </div>
+                        <p class="card-text">{{ review.content }}</p>
+                        <div class="text-muted small">
+                            By {{ review.user.username }} on {{ review.created_at|date:"F d, Y" }}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">No reviews yet. Be the first to review this tour!</p>
+                {% endfor %}
+            </section>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Available Dates -->
+            <div class="card mb-4" id="available-dates">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Available Dates</h3>
+                    {% for date in dates %}
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="mb-1">{{ date.start_date|date:"F d, Y" }}</h6>
+                                <small class="text-muted">{{ date.available_spots }} spots left</small>
+                            </div>
+                            <span class="badge {% if date.is_guaranteed %}bg-success{% else %}bg-warning{% endif %}">
+                                {% if date.is_guaranteed %}Guaranteed{% else %}Not Guaranteed{% endif %}
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-success">${{ date.price }}</span>
+                            <a href="{% url 'booking_create' date.id %}" class="btn btn-sm btn-success">
+                                Book Now
+                            </a>
+                        </div>
+                    </div>
+                    {% if not forloop.last %}<hr>{% endif %}
+                    {% empty %}
+                    <p class="text-muted">No available dates at the moment.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Quick Info -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Tour Information</h3>
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-calendar me-2"></i>
+                            Duration: {{ tour.duration }} days
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-users me-2"></i>
+                            Group Size: Max {{ tour.group_size }} people
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-mountain me-2"></i>
+                            Difficulty: {{ tour.difficulty }}
+                        </li>
+                        <li>
+                            <i class="fas fa-tag me-2"></i>
+                            Category: {{ tour.category.name }}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Similar Tours -->
+            {% if related %}
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Similar Tours</h3>
+                    {% for related_tour in related %}
+                    <div class="mb-3">
+                        <h6 class="mb-1">{{ related_tour.name }}</h6>
+                        <p class="small text-muted mb-2">{{ related_tour.duration }} days | {{ related_tour.difficulty }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-success">${{ related_tour.price }}</span>
+                            <a href="{% url 'tour_detail' related_tour.slug %}" class="btn btn-sm btn-outline-success">
+                                View Tour
+                            </a>
+                        </div>
+                    </div>
+                    {% if not forloop.last %}<hr>{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tour-hero {
+        height: 600px;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+    }
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.4);
+    }
+    .price-box {
+        backdrop-filter: blur(10px);
+    }
+</style>
+{% endblock %}

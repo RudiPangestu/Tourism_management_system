@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Bookings - EcoTourism{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h2">Manage Bookings{% if user.is_staff %} (All Users){% endif %}</h1>
+        <div>
+            <button onclick="printBookings()" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-print me-2"></i>Print Bookings
+            </button>
+            <a href="{% url 'tour_list' %}" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i>Create New Booking
+            </a>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card shadow-sm mb-4" id="filters-section">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                        <option value="confirmed" {% if request.GET.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                        <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>Completed</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="date_from" class="form-label">Date From</label>
+                    <input type="date" name="date_from" id="date_from" class="form-control" value="{{ request.GET.date_from }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="date_to" class="form-label">Date To</label>
+                    <input type="date" name="date_to" id="date_to" class="form-control" value="{{ request.GET.date_to }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-success w-100">Apply Filters</button>
+                </div>
+            </form>
+            {% if request.GET.status or request.GET.date_from or request.GET.date_to %}
+            <div class="mt-3">
+                <a href="{% url 'manage_bookings' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-times me-1"></i>Clear Filters
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Bookings Table -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="table-responsive" id="bookings-table">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>Customer</th>
+                            <th>Tour</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Amount</th>
+                            <th class="no-print">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                        <tr>
+                            <td>{{ booking.confirmation_code }}</td>
+                            <td>
+                                {{ booking.user.get_full_name|default:booking.user.username }}
+                                {% if user.is_staff and booking.user.email %}
+                                    <br><small class="text-muted">{{ booking.user.email }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ booking.tour.name }}</td>
+                            <td>{{ booking.booking_date|date:"M d, Y" }}</td>
+                            <td>
+                                <span class="badge {% if booking.status == 'confirmed' %}bg-success{% elif booking.status == 'pending' %}bg-warning{% elif booking.status == 'completed' %}bg-primary{% else %}bg-danger{% endif %}">
+                                    {{ booking.status|title }}
+                                </span>
+                            </td>
+                            <td>${{ booking.total_price }}</td>
+                            <td class="no-print">
+                                <div class="btn-group">
+                                    <a href="{% url 'booking_detail' booking.id %}" class="btn btn-sm btn-outline-success">
+                                        View
+                                    </a>
+                                    {% if booking.status == 'pending' %}
+                                    <a href="{% url 'booking_edit' booking.id %}" class="btn btn-sm btn-outline-secondary">
+                                        Edit
+                                    </a>
+                                    <a href="{% url 'booking_cancel' booking.id %}" class="btn btn-sm btn-outline-danger">
+                                        Cancel
+                                    </a>
+                                    {% endif %}
+                                    {% if user.is_staff and booking.status == 'pending' %}
+                                    <button class="btn btn-sm btn-outline-success" onclick="confirmBooking({{ booking.id }})">
+                                        Confirm
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4">
+                                <p class="text-muted mb-0">No bookings found.</p>
+                                {% if request.GET.status or request.GET.date_from or request.GET.date_to %}
+                                <p class="text-muted small">Try adjusting your filters or <a href="{% url 'manage_bookings' %}">clear all filters</a>.</p>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<style>
+    @media print {
+        /* Hide elements that shouldn't be printed */
+        .no-print,
+        .btn,
+        .card-body form,
+        #filters-section {
+            display: none !important;
+        }
+        
+        /* Adjust table for printing */
+        .table {
+            font-size: 12px;
+        }
+        
+        /* Print page settings */
+        @page {
+            margin: 0.5in;
+        }
+        
+        /* Add header for print */
+        body::before {
+            content: "EcoTourism - Bookings Report";
+            display: block;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        /* Hide Bootstrap card styling for print */
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        
+        .card-body {
+            padding: 0 !important;
+        }
+    }
+</style>
+
+<script>
+    function printBookings() {
+        // Get current date for the report
+        const currentDate = new Date().toLocaleDateString();
+        const originalTitle = document.title;
+        
+        // Change title for print
+        document.title = `Bookings Report - ${currentDate}`;
+        
+        // Print the page
+        window.print();
+        
+        // Restore original title
+        document.title = originalTitle;
+    }
+
+    function confirmBooking(bookingId) {
+        if (confirm('Are you sure you want to confirm this booking?')) {
+            // Send AJAX request to confirm booking
+            fetch(`/bookings/confirm/${bookingId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error confirming booking: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while confirming the booking.');
+            });
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

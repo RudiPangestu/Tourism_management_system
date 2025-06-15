@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Booking Details - EcoTourism{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Booking Status -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h1 class="h3 mb-0">Booking #{{ booking.confirmation_code }}</h1>
+                        <span class="badge {% if booking.status == 'confirmed' %}bg-success{% elif booking.status == 'pending' %}bg-warning{% else %}bg-danger{% endif %}">
+                            {{ booking.status|title }}
+                        </span>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="bg-light p-3 rounded">
+                                <small class="text-muted d-block">Booking Date</small>
+                                <strong>{{ booking.booking_date|date:"F d, Y" }}</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="bg-light p-3 rounded">
+                                <small class="text-muted d-block">Total Price</small>
+                                <strong class="text-success">${{ booking.total_price }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tour Details -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Tour Details</h2>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <img src="{{ booking.tour.featured_image.url }}" class="img-fluid rounded" alt="{{ booking.tour.name }}">
+                        </div>
+                        <div class="col-md-8">
+                            <h3 class="h5 mb-2">{{ booking.tour.name }}</h3>
+                            <p class="text-muted mb-3">
+                                {{ booking.tour_date.start_date|date:"F d, Y" }} - 
+                                {{ booking.tour_date.end_date|date:"F d, Y" }}
+                            </p>
+                            <div class="d-flex gap-3 mb-3">
+                                <div>
+                                    <small class="text-muted d-block">Duration</small>
+                                    <strong>{{ booking.tour.duration }} days</strong>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Difficulty</small>
+                                    <strong>{{ booking.tour.difficulty }}</strong>
+                                </div>
+                                <div>
+                                    <small class="text-muted d-block">Group Size</small>
+                                    <strong>{{ booking.tour.group_size }} people</strong>
+                                </div>
+                            </div>
+                            <a href="{% url 'tour_detail' booking.tour.slug %}" class="btn btn-outline-success btn-sm">
+                                View Tour Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Participants -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Participants</h2>
+                    {% for participant in booking.participants.all %}
+                    <div class="bg-light p-3 rounded mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h3 class="h6 mb-2">{{ participant.first_name }} {{ participant.last_name }}</h3>
+                                <p class="mb-2">
+                                    <i class="fas fa-envelope me-2 text-muted"></i>{{ participant.email }}
+                                </p>
+                                <p class="mb-2">
+                                    <i class="fas fa-phone me-2 text-muted"></i>{{ participant.phone }}
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-2">
+                                    <small class="text-muted">Passport:</small>
+                                    {{ participant.passport_number }}
+                                </p>
+                                <p class="mb-2">
+                                    <small class="text-muted">Nationality:</small>
+                                    {{ participant.nationality }}
+                                </p>
+                                <p class="mb-0">
+                                    <small class="text-muted">Date of Birth:</small>
+                                    {{ participant.date_of_birth|date:"F d, Y" }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Special Requests -->
+            {% if booking.special_requests %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Special Requests</h2>
+                    <p class="mb-0">{{ booking.special_requests }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Actions -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Booking Actions</h2>
+                    {% if booking.status == 'pending' %}
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'booking_edit' booking.id %}" class="btn btn-success">
+                            <i class="fas fa-edit me-2"></i>Edit Booking
+                        </a>
+                        <a href="{% url 'booking_cancel' booking.id %}" class="btn btn-danger">
+                            <i class="fas fa-times me-2"></i>Cancel Booking
+                        </a>
+                    </div>
+                    {% endif %}
+                    <a href="{% url 'booking_receipt' booking.id %}" class="btn btn-outline-success w-100 mt-2">
+                        <i class="fas fa-download me-2"></i>Download Receipt
+                    </a>
+                </div>
+            </div>
+
+            <!-- Emergency Contacts -->
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="h4 mb-3">Emergency Contacts</h2>
+                    {% for participant in booking.participants.all %}
+                    <div class="mb-3">
+                        <h3 class="h6 mb-2">For {{ participant.first_name }} {{ participant.last_name }}</h3>
+                        <p class="mb-1">
+                            <strong>{{ participant.emergency_contact }}</strong>
+                        </p>
+                        <p class="mb-0">
+                            <i class="fas fa-phone me-2 text-muted"></i>{{ participant.emergency_phone }}
+                        </p>
+                    </div>
+                    {% if not forloop.last %}<hr>{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

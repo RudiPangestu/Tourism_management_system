@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ destination.name }} - EcoTourism{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="destination-hero position-relative" style="background-image: url('{{ destination.featured_image.url }}');">
+    <div class="overlay"></div>
+    <div class="container position-relative py-5 text-white">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-4 mb-3">{{ destination.name }}</h1>
+                <p class="lead mb-0">{{ destination.location }}</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                {% if destination.reviews.count > 0 %}
+                <div class="rating mb-2">
+                    <span class="h4">
+                        {{ destination.reviews.all|length }} Reviews
+                        <span class="text-warning">★</span> 
+                        {{ destination.reviews.all|dictsort:"rating"|last }}
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container py-5">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Description -->
+            <section class="mb-5">
+                <h2 class="h3 mb-4">About {{ destination.name }}</h2>
+                <p class="lead">{{ destination.description }}</p>
+            </section>
+
+            <!-- Highlights -->
+            <section class="mb-5">
+                <h2 class="h3 mb-4">Highlights</h2>
+                <div class="bg-light p-4 rounded">
+                    {{ destination.highlights|linebreaks }}
+                </div>
+            </section>
+
+            <!-- Attractions -->
+            {% if destination.attractions.exists %}
+            <section class="mb-5">
+                <h2 class="h3 mb-4">Key Attractions</h2>
+                <div class="row">
+                    {% for attraction in destination.attractions.all %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card h-100">
+                            {% if attraction.image %}
+                            <img src="{{ attraction.image.url }}" class="card-img-top" alt="{{ attraction.name }}">
+                            {% endif %}
+                            <div class="card-body">
+                                <h5 class="card-title">{{ attraction.name }}</h5>
+                                <p class="card-text">{{ attraction.description }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- Gallery -->
+            {% if destination.images.exists %}
+            <section class="mb-5">
+                <h2 class="h3 mb-4">Photo Gallery</h2>
+                <div class="row g-3">
+                    {% for image in destination.images.all %}
+                    <div class="col-md-4">
+                        <a href="{{ image.image.url }}" class="gallery-item">
+                            <img src="{{ image.image.url }}" class="img-fluid rounded" alt="{{ image.caption }}">
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- Reviews -->
+            <section class="mb-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="h3 mb-0">Reviews</h2>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'create_destination_review' destination.id %}" class="btn btn-success">
+                        Write a Review
+                    </a>
+                    {% endif %}
+                </div>
+
+                {% for review in destination.reviews.all %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-2">
+                            <h5 class="card-title mb-0">{{ review.title }}</h5>
+                            <div class="text-warning">
+                                {% for i in review.rating|rjust:5 %}★{% endfor %}
+                            </div>
+                        </div>
+                        <p class="card-text">{{ review.content }}</p>
+                        <div class="text-muted small">
+                            By {{ review.user.username }} on {{ review.created_at|date:"F d, Y" }}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted">No reviews yet. Be the first to review this destination!</p>
+                {% endfor %}
+            </section>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Map -->
+
+            <!-- Available Tours -->
+            {% if destination.tours.exists %}
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">Available Tours</h3>
+                    {% for tour in destination.tours.all %}
+                    <div class="mb-3">
+                        <h6 class="mb-1">{{ tour.name }}</h6>
+                        <p class="small text-muted mb-2">{{ tour.duration }} days | {{ tour.difficulty }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="text-success">${{ tour.price }}</span>
+                            <a href="{% url 'tour_detail' tour.slug %}" class="btn btn-sm btn-outline-success">
+                                View Tour
+                            </a>
+                        </div>
+                    </div>
+                    {% if not forloop.last %}<hr>{% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Region Info -->
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="h5 mb-3">About {{ destination.region.name }}</h3>
+                    <p>{{ destination.region.description }}</p>
+                   
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .destination-hero {
+        height: 500px;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+    }
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.4);
+    }
+    .gallery-item {
+        display: block;
+        overflow: hidden;
+        border-radius: 0.25rem;
+    }
+    .gallery-item img {
+        transition: transform 0.3s ease;
+    }
+    .gallery-item:hover img {
+        transform: scale(1.05);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+{% if destination.latitude and destination.longitude %}
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+
+{% endif %}
+{% endblock %}

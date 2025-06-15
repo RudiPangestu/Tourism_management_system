@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+
+{% block title %}Reviews for {{ tour.name }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Tour Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'tour_list' %}">Tours</a></li>
+                    <li class="breadcrumb-item"><a href="{{ tour.get_absolute_url }}">{{ tour.name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Reviews</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Tour Info Card -->
+            <div class="card mb-4">
+                <div class="row g-0">
+                    <div class="col-md-4">
+                        <img src="{{ tour.featured_image.url }}" class="img-fluid rounded-start h-100" alt="{{ tour.name }}" style="object-fit: cover;">
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card-body">
+                            <h4 class="card-title">{{ tour.name }}</h4>
+                            <p class="card-text text-muted">{{ tour.category.name }}</p>
+                            <div class="d-flex align-items-center mb-2">
+                                <span class="badge bg-success me-2">{{ tour.duration }} Days</span>
+                                <span class="badge bg-secondary me-2">{{ tour.difficulty|capfirst }}</span>
+                                <span class="badge bg-info">Max {{ tour.group_size }} People</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <h5 class="text-success mb-0">
+                                    {% if tour.discount_price %}
+                                        <span class="text-decoration-line-through text-muted me-2">${{ tour.price }}</span>
+                                        ${{ tour.discount_price }}
+                                    {% else %}
+                                        ${{ tour.price }}
+                                    {% endif %}
+                                </h5>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reviews Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3>Reviews ({{ reviews.count }})</h3>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'create_tour_review' tour.id %}" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Write a Review
+                    </a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-outline-success">
+                        Login to Write a Review
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- Reviews List -->
+            {% if reviews %}
+                {% for review in reviews %}
+                    <div class="card mb-4 shadow-sm">
+                        <div class="card-body">
+                            <!-- Review Header -->
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                         style="width: 50px; height: 50px;">
+                                        <span class="text-white fw-bold">
+                                            {{ review.user.first_name|first|default:review.user.username|first|upper }}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">
+                                            {% if review.user.first_name %}
+                                                {{ review.user.first_name }} {{ review.user.last_name }}
+                                            {% else %}
+                                                {{ review.user.username }}
+                                            {% endif %}
+                                        </h6>
+                                        <small class="text-muted">{{ review.created_at|date:"F d, Y" }}</small>
+                                    </div>
+                                </div>
+                                
+                                <!-- Rating Stars -->
+                                <div class="d-flex align-items-center">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= review.rating %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-muted"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <span class="ms-2 text-muted">({{ review.rating }}/5)</span>
+                                </div>
+                            </div>
+
+                            <!-- Review Content -->
+                            <h5 class="card-title">{{ review.title }}</h5>
+                            <p class="card-text">{{ review.content|linebreaks }}</p>
+
+                            <!-- Review Images -->
+                            {% if review.images.all %}
+                                <div class="row g-2 mt-3">
+                                    {% for image in review.images.all %}
+                                        <div class="col-md-3 col-sm-4 col-6">
+                                            <div class="position-relative">
+                                                <img src="{{ image.image.url }}" 
+                                                     class="img-fluid rounded cursor-pointer review-image" 
+                                                     alt="{{ image.caption }}"
+                                                     data-bs-toggle="modal" 
+                                                     data-bs-target="#imageModal{{ forloop.counter }}"
+                                                     style="height: 120px; object-fit: cover; width: 100%;">
+                                            </div>
+                                            
+                                            <!-- Image Modal -->
+                                            <div class="modal fade" id="imageModal{{ forloop.counter }}" tabindex="-1">
+                                                <div class="modal-dialog modal-lg modal-dialog-centered">
+                                                    <div class="modal-content">
+                                                        <div class="modal-header">
+                                                            <h5 class="modal-title">{{ image.caption|default:"Review Image" }}</h5>
+                                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                        </div>
+                                                        <div class="modal-body text-center">
+                                                            <img src="{{ image.image.url }}" class="img-fluid" alt="{{ image.caption }}">
+                                                            {% if image.caption %}
+                                                                <p class="mt-3 text-muted">{{ image.caption }}</p>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
+                            <!-- Edit/Delete for Review Owner -->
+                            {% if user == review.user %}
+                                <div class="mt-3 pt-3 border-top">
+                                    <a href="{% url 'edit_tour_review' review.id %}" class="btn btn-sm btn-outline-success me-2">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <button class="btn btn-sm btn-outline-danger" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteModal{{ review.id }}">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </button>
+
+                                    <!-- Delete Confirmation Modal -->
+                                    <div class="modal fade" id="deleteModal{{ review.id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Confirm Delete</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    Are you sure you want to delete your review "{{ review.title }}"?
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <form method="post" action="#" class="d-inline">
+                                                        {% csrf_token %}
+                                                        <button type="submit" class="btn btn-danger">Delete</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <!-- No Reviews State -->
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-star text-muted" style="font-size: 4rem;"></i>
+                    </div>
+                    <h4 class="text-muted">No Reviews Yet</h4>
+                    <p class="text-muted mb-4">Be the first to share your experience with this tour!</p>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'create_tour_review' tour.id %}" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Write the First Review
+                        </a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="btn btn-outline-success">
+                            Login to Write a Review
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+  
+
+            <!-- Related Tours -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Related Tours</h6>
+                </div>
+                <div class="card-body">
+                    {% for related_tour in tour.category.tours.all|slice:":3" %}
+                        {% if related_tour != tour %}
+                            <div class="d-flex mb-3">
+                                <img src="{{ related_tour.featured_image.url }}" 
+                                     class="rounded me-3" 
+                                     style="width: 60px; height: 60px; object-fit: cover;" 
+                                     alt="{{ related_tour.name }}">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">
+                                        <a href="{{ related_tour.get_absolute_url }}" class="text-decoration-none">
+                                            {{ related_tour.name|truncatechars:40 }}
+                                        </a>
+                                    </h6>
+                                    <small class="text-muted">{{ related_tour.duration }} days • ${{ related_tour.price }}</small>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.review-image:hover {
+    opacity: 0.8;
+    transform: scale(1.02);
+    transition: all 0.2s ease;
+}
+
+.card {
+    transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+
+.modal-dialog-centered {
+    display: flex;
+    align-items: center;
+    min-height: calc(100% - 1rem);
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Font Awesome for icons -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+{% endblock %}
